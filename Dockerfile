@@ -52,8 +52,8 @@ WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy only the application code
-COPY server.py .
+# Copy the application code
+COPY src/ src/
 
 # Expose the port the app runs on
 EXPOSE 8000
