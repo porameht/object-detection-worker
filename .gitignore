@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Editor-specific files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+.Trash-*
+.nfs*
+
+# Logs and temporary files
+*.log
+*.tmp
+temp/
+
+# Configuration files with sensitive data (e.g., environment variables)
+.env
+.flaskenv
+secrets.py
