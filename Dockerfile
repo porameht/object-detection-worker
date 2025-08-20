@@ -59,4 +59,4 @@ COPY src/ src/
 EXPOSE 8000
 
 # Command to run the application
-CMD ["python", "src/main.py"]
+CMD ["python", "-m", "src.main"]
