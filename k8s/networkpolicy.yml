@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: object-detection-worker-netpol
+  namespace: object-detection
+spec:
+  podSelector:
+    matchLabels:
+      app: object-detection-worker
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow HTTPS for AWS services
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow Redis connection
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 6379
