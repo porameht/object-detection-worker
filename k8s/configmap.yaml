@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  gcp-project-id: "processing-469712"
+  gcs-bucket: "object-detection-images-processing-469712"
+  pubsub-topic: "object-detection-tasks"

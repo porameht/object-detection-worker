@@ -3,16 +3,15 @@ import json
 import logging
 from uuid import UUID
 
-import redis.asyncio as redis
 from google.cloud import storage
 
 from .domain.entities.detection_result import ProcessingTask
-from .application.use_cases.process_detection_task import ProcessDetectionTaskUseCase
+from .infrastructure.services.simple_task_processor import SimpleTaskProcessor
 from .infrastructure.config import load_config
 from .infrastructure.models.rfdetr_model import RFDETRModel
 from .infrastructure.repositories.gcs_image_repository import GCSImageRepository
-from .infrastructure.repositories.redis_task_repository import RedisTaskRepository
-from .infrastructure.services.http_callback_service import HttpCallbackService
+from .infrastructure.repositories.pubsub_task_processor import PubSubTaskProcessor
+from .infrastructure.services.internal_api_callback_service import InternalAPICallbackService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,59 +23,60 @@ class ObjectDetectionWorker:
         self._setup_dependencies()
 
     def _setup_dependencies(self):
-        redis_client = redis.from_url(self._config.redis_url)
         gcs_client = storage.Client(project=self._config.gcp_project_id)
         
         detection_model = RFDETRModel(self._config.confidence_threshold)
         image_repository = GCSImageRepository(gcs_client, self._config.gcs_bucket)
-        task_repository = RedisTaskRepository(redis_client)
-        callback_service = HttpCallbackService(self._config.callback_timeout)
+        callback_service = InternalAPICallbackService(
+            self._config.api_service_url,
+            self._config.callback_timeout
+        )
         
-        self._process_task_use_case = ProcessDetectionTaskUseCase(
+        self._task_processor_service = SimpleTaskProcessor(
             detection_model,
             image_repository,
-            task_repository,
             callback_service,
         )
         
-        self._redis_client = redis_client
+        self._pubsub_processor = PubSubTaskProcessor(
+            self._config.gcp_project_id,
+            self._config.pubsub_subscription
+        )
 
-    async def _dequeue_task(self) -> ProcessingTask:
-        result = await self._redis_client.brpop(self._config.queue_name, timeout=10)
-        if result:
-            _, task_json = result
-            task_data = json.loads(task_json)
-            return ProcessingTask(
-                task_id=UUID(task_data["task_id"]),
-                image_key=task_data["image_key"],
-                callback_url=task_data.get("callback_url"),
-            )
-        return None
+    def _handle_task(self, task: ProcessingTask):
+        """Handle a single task - called by Pub/Sub processor"""
+        try:
+            logger.info(f"Processing task {task.task_id}")
+            
+            # Run the async task processor in sync context
+            import asyncio
+            asyncio.run(self._task_processor_service.process_task(task))
+            
+            logger.info(f"Task {task.task_id} completed")
+            
+        except Exception as e:
+            logger.error(f"Error processing task {task.task_id}: {e}")
+            raise  # Re-raise to trigger message nack
 
-    async def run(self):
-        logger.info("Starting object detection worker...")
+    def run(self):
+        """Start the worker using Pub/Sub message consumption"""
+        logger.info("Starting object detection worker with Pub/Sub...")
         
-        while True:
-            try:
-                task = await self._dequeue_task()
-                
-                if task:
-                    logger.info(f"Processing task {task.task_id}")
-                    await self._process_task_use_case.execute(task)
-                    logger.info(f"Task {task.task_id} completed")
-                
-            except KeyboardInterrupt:
-                logger.info("Worker shutting down...")
-                break
-            except Exception as e:
-                logger.error(f"Error processing task: {e}")
-                continue
+        try:
+            # Start consuming messages - this will block
+            self._pubsub_processor.start_consuming(self._handle_task)
+            
+        except KeyboardInterrupt:
+            logger.info("Worker shutting down...")
+        except Exception as e:
+            logger.error(f"Worker error: {e}")
+            raise
 
 
-async def main():
+def main():
     worker = ObjectDetectionWorker()
-    await worker.run()
+    worker.run()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

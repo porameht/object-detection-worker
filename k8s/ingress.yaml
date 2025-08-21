@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: object-detection-worker-ingress
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.global-static-ip-name: object-detection-worker-ip
+    ingress.gcp.kubernetes.io/managed-certificates: object-detection-worker-ssl-cert
+    kubernetes.io/ingress.allow-http: "true"
+spec:
+  rules:
+  - host: worker.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: object-detection-worker-service
+            port:
+              number: 80
