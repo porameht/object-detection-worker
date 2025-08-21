@@ -29,7 +29,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: object-detection-worker
-        image: IMAGE_PLACEHOLDER
+        image: GOOGLE_CLOUD_IMAGE
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -50,6 +50,13 @@ spec:
             configMapKeyRef:
               name: object-detection-config
               key: GCS_BUCKET
+        - name: GOOGLE_CLOUD_PROJECT
+          valueFrom:
+            configMapKeyRef:
+              name: object-detection-config
+              key: GCP_PROJECT_ID
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
         envFrom:
         - configMapRef:
             name: object-detection-config
@@ -61,21 +68,17 @@ spec:
             memory: "2Gi"
             cpu: "1000m"
         livenessProbe:
-          exec:
-            command:
-            - python
-            - -c
-            - "import sys; sys.exit(0)"
+          httpGet:
+            path: /health
+            port: 8000
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
-          exec:
-            command:
-            - python
-            - -c
-            - "import sys; sys.exit(0)"
+          httpGet:
+            path: /health
+            port: 8000
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
@@ -99,6 +102,7 @@ spec:
           optional: true
       nodeSelector:
         kubernetes.io/arch: amd64
+        cloud.google.com/gke-nodepool: default-pool
       tolerations:
       - key: "node.kubernetes.io/not-ready"
         operator: "Exists"

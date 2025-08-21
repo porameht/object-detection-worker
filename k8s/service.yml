@@ -5,6 +5,9 @@ metadata:
   namespace: object-detection
   labels:
     app: object-detection-worker
+  annotations:
+    cloud.google.com/backend-config: '{"default": "object-detection-backend-config"}'
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   type: ClusterIP
   ports:

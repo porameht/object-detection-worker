@@ -7,6 +7,7 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "object-detection-ip"
     networking.gke.io/managed-certificates: "object-detection-cert"
+    cloud.google.com/armor-config: '{"object-detection-armor-policy": "object-detection-worker-service"}'
     ingress.gcp.kubernetes.io/pre-shared-cert: "object-detection-ssl"
 spec:
   rules:
@@ -37,14 +38,19 @@ metadata:
   namespace: object-detection
 spec:
   healthCheck:
-    checkIntervalSec: 30
-    timeoutSec: 5
+    checkIntervalSec: 15
+    timeoutSec: 10
     healthyThreshold: 1
-    unhealthyThreshold: 3
+    unhealthyThreshold: 2
     type: HTTP
     requestPath: /health
     port: 8000
+  connectionDraining:
+    drainingTimeoutSec: 60
   sessionAffinity:
     affinityType: "CLIENT_IP"
     affinityCookieTtlSec: 3600
-  timeoutSec: 30
+  timeoutSec: 60
+  logging:
+    enable: true
+    sampleRate: 1.0

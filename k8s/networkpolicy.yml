@@ -3,6 +3,8 @@ kind: NetworkPolicy
 metadata:
   name: object-detection-worker-netpol
   namespace: object-detection
+  labels:
+    app: object-detection-worker
 spec:
   podSelector:
     matchLabels:
@@ -14,7 +16,17 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: monitoring
+          name: object-detection
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - namespaceSelector:
+        matchLabels:
+          name: gke-system
+    ports:
+    - protocol: TCP
+      port: 8000
+  - from: []
     ports:
     - protocol: TCP
       port: 8000
@@ -26,11 +38,13 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  # Allow HTTPS for AWS services
+  # Allow HTTPS for GCP services
   - to: []
     ports:
     - protocol: TCP
       port: 443
+    - protocol: TCP
+      port: 80
   # Allow Redis connection
   - to: []
     ports:
