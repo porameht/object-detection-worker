@@ -89,7 +89,7 @@ kubectl apply -f k8s/serviceaccount.yml || true
 echo "Setup complete!"
 echo ""
 echo "Next steps:"
-echo "1. Update k8s/secret.yml with your Redis URL"
+echo "1. Update k8s/configmap.yaml with your GCP project details"
 echo "2. Update k8s/configmap.yml with your configuration (already done)"
 echo "3. Set up GitHub secrets using ./setup-gke-credentials.sh"
 echo "4. Push to main branch to trigger deployment"

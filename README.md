@@ -8,13 +8,13 @@ The application follows Clean Architecture principles with clear separation of c
 
 - **Domain**: Core business entities and repository interfaces
 - **Application**: Use cases and business logic
-- **Infrastructure**: External service implementations (Redis, S3, HTTP)
+- **Infrastructure**: External service implementations (Pub/Sub, GCS, HTTP)
 
 ## Features
 
 - **Real-time Object Detection**: Uses RT-DETR model for accurate object detection
-- **Queue-based Processing**: Redis-backed task queue for scalable processing
-- **Cloud Storage**: S3 integration for image input and result storage
+- **Queue-based Processing**: Pub/Sub-backed task queue for scalable processing
+- **Cloud Storage**: GCS integration for image input and result storage
 - **HTTP Callbacks**: Optional webhook notifications on task completion
 - **Clean Architecture**: Maintainable, testable codebase with dependency injection
 - **Docker Support**: Multi-stage builds optimized for production
@@ -26,8 +26,8 @@ The application follows Clean Architecture principles with clear separation of c
 
 - Python 3.12+
 - Docker (optional)
-- Redis server
-- AWS S3 bucket
+- Google Cloud Project with Pub/Sub and Storage APIs enabled
+- GCS bucket
 
 ### Local Development
 
@@ -76,10 +76,9 @@ All configuration is handled through environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `AWS_REGION` | AWS region for S3 | `us-east-1` |
-| `S3_BUCKET` | S3 bucket for images and results | `object-detection-images` |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
-| `QUEUE_NAME` | Redis queue name | `detection_queue` |
+| `GCP_PROJECT_ID` | Google Cloud Project ID | - |
+| `GCS_BUCKET` | GCS bucket for images and results | `object-detection-images` |
+| `PUBSUB_TOPIC` | Pub/Sub topic name | `object-detection-tasks` |
 | `CONFIDENCE_THRESHOLD` | Detection confidence threshold | `0.5` |
 | `CALLBACK_TIMEOUT` | HTTP callback timeout (seconds) | `30` |
 
@@ -87,7 +86,7 @@ All configuration is handled through environment variables:
 
 ### Input Format
 
-Tasks are JSON objects pushed to the Redis queue:
+Tasks are JSON objects published to the Pub/Sub topic:
 
 ```json
 {
@@ -99,7 +98,7 @@ Tasks are JSON objects pushed to the Redis queue:
 
 ### Output Format
 
-Results are stored in S3 as JSON:
+Results are stored in GCS as JSON:
 
 ```json
 {

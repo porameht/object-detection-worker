@@ -59,10 +59,10 @@ case "$1" in
         kubectl run test-pod --image=busybox -n $NAMESPACE --rm -it --restart=Never -- sh -c "
             echo 'Testing DNS resolution...'
             nslookup google.com
-            echo 'Testing Redis connectivity...'
-            nc -zv redis-service 6379 || echo 'Redis connection failed'
-            echo 'Testing S3 connectivity...'
-            nc -zv s3.amazonaws.com 443 || echo 'S3 connection test completed'
+            echo 'Testing GCS connectivity...'
+            nc -zv storage.googleapis.com 443 || echo 'GCS connection test completed'
+            echo 'Testing Pub/Sub connectivity...'
+            nc -zv pubsub.googleapis.com 443 || echo 'Pub/Sub connection test completed'
         "
         ;;
     "resource-usage")

@@ -25,11 +25,11 @@ spec:
             configMapKeyRef:
               name: app-config
               key: gcp-project-id
-        - name: REDIS_URL
+        - name: PUBSUB_TOPIC
           valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: redis-url
+            configMapKeyRef:
+              name: app-config
+              key: pubsub-topic
         - name: GCS_BUCKET
           valueFrom:
             configMapKeyRef:
