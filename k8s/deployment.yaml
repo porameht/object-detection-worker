@@ -37,21 +37,33 @@ spec:
               key: gcs-bucket
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "2Gi"
+            cpu: "1000m"
           limits:
-            memory: "256Mi"
-            cpu: "200m"
-        livenessProbe:
+            memory: "4Gi"
+            cpu: "2000m"
+        startupProbe:
           httpGet:
             path: /health
             port: 8000
           initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 18
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
             port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
       serviceAccountName: object-detection-worker-sa
