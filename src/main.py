@@ -3,14 +3,14 @@ import json
 import logging
 from uuid import UUID
 
-import boto3
 import redis.asyncio as redis
+from google.cloud import storage
 
 from .domain.entities.detection_result import ProcessingTask
 from .application.use_cases.process_detection_task import ProcessDetectionTaskUseCase
 from .infrastructure.config import load_config
 from .infrastructure.models.rfdetr_model import RFDETRModel
-from .infrastructure.repositories.s3_image_repository import S3ImageRepository
+from .infrastructure.repositories.gcs_image_repository import GCSImageRepository
 from .infrastructure.repositories.redis_task_repository import RedisTaskRepository
 from .infrastructure.services.http_callback_service import HttpCallbackService
 
@@ -25,10 +25,10 @@ class ObjectDetectionWorker:
 
     def _setup_dependencies(self):
         redis_client = redis.from_url(self._config.redis_url)
-        s3_client = boto3.client('s3', region_name=self._config.aws_region)
+        gcs_client = storage.Client(project=self._config.gcp_project_id)
         
         detection_model = RFDETRModel(self._config.confidence_threshold)
-        image_repository = S3ImageRepository(s3_client, self._config.s3_bucket)
+        image_repository = GCSImageRepository(gcs_client, self._config.gcs_bucket)
         task_repository = RedisTaskRepository(redis_client)
         callback_service = HttpCallbackService(self._config.callback_timeout)
         
