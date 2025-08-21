@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: object-detection-ingress
+  namespace: object-detection
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "object-detection-ip"
+    networking.gke.io/managed-certificates: "object-detection-cert"
+    ingress.gcp.kubernetes.io/pre-shared-cert: "object-detection-ssl"
+spec:
+  rules:
+  - host: object-detection.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: object-detection-worker-service
+            port:
+              number: 8000
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: object-detection-cert
+  namespace: object-detection
+spec:
+  domains:
+    - object-detection.example.com
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: object-detection-backend-config
+  namespace: object-detection
+spec:
+  healthCheck:
+    checkIntervalSec: 30
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 3
+    type: HTTP
+    requestPath: /health
+    port: 8000
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+    affinityCookieTtlSec: 3600
+  timeoutSec: 30

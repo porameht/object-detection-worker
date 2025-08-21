@@ -1,47 +1,46 @@
 #!/bin/bash
 
-# Build and Push Docker Image Script
+# Build and Push Docker Image Script for GCP
 # Usage: ./scripts/build-push.sh [tag]
 
 set -e
 
 IMAGE_TAG=${1:-"latest"}
-AWS_REGION=${AWS_REGION:-"us-east-1"}
+PROJECT_ID=${GCP_PROJECT_ID:-"processing-469712"}
+GAR_LOCATION=${GAR_LOCATION:-"asia-southeast1"}
 REPOSITORY_NAME="object-detection-worker"
 
-# Get AWS account ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+GAR_REGISTRY="$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY_NAME"
 
 echo "Building and pushing Docker image"
-echo "Registry: $ECR_REGISTRY"
+echo "Registry: $GAR_REGISTRY"
 echo "Repository: $REPOSITORY_NAME"
 echo "Tag: $IMAGE_TAG"
 
-# Login to ECR
-echo "Logging in to ECR..."
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+# Login to GAR
+echo "Logging in to Google Artifact Registry..."
+gcloud auth configure-docker $GAR_LOCATION-docker.pkg.dev
 
 # Build image
 echo "Building Docker image..."
 docker build -t $REPOSITORY_NAME:$IMAGE_TAG .
 
-# Tag for ECR
-echo "Tagging image for ECR..."
-docker tag $REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
+# Tag for GAR
+echo "Tagging image for GAR..."
+docker tag $REPOSITORY_NAME:$IMAGE_TAG $GAR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
 
 # Also tag as latest if not already latest
 if [ "$IMAGE_TAG" != "latest" ]; then
-    docker tag $REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY_NAME:latest
+    docker tag $REPOSITORY_NAME:$IMAGE_TAG $GAR_REGISTRY/$REPOSITORY_NAME:latest
 fi
 
-# Push to ECR
-echo "Pushing image to ECR..."
-docker push $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
+# Push to GAR
+echo "Pushing image to GAR..."
+docker push $GAR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG
 
 if [ "$IMAGE_TAG" != "latest" ]; then
-    docker push $ECR_REGISTRY/$REPOSITORY_NAME:latest
+    docker push $GAR_REGISTRY/$REPOSITORY_NAME:latest
 fi
 
 echo "Image pushed successfully!"
-echo "Image URI: $ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG"
+echo "Image URI: $GAR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG"

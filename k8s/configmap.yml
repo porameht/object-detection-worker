@@ -4,8 +4,8 @@ metadata:
   name: object-detection-config
   namespace: object-detection
 data:
-  AWS_REGION: "us-east-1"
-  S3_BUCKET: "object-detection-images"
+  GCP_PROJECT_ID: "processing-469712"
+  GCS_BUCKET: "object-detection-images"
   QUEUE_NAME: "detection_queue"
   CONFIDENCE_THRESHOLD: "0.5"
   CALLBACK_TIMEOUT: "30"

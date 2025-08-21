@@ -35,11 +35,21 @@ spec:
         - containerPort: 8000
           name: http
         env:
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: object-detection-config
+              key: GCP_PROJECT_ID
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
               name: object-detection-secrets
               key: REDIS_URL
+        - name: GCS_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: object-detection-config
+              key: GCS_BUCKET
         envFrom:
         - configMapRef:
             name: object-detection-config
@@ -75,11 +85,18 @@ spec:
           mountPath: /tmp
         - name: cache
           mountPath: /app/.cache
+        - name: gcp-service-account
+          mountPath: /var/secrets/google
+          readOnly: true
       volumes:
       - name: tmp
         emptyDir: {}
       - name: cache
         emptyDir: {}
+      - name: gcp-service-account
+        secret:
+          secretName: gcp-service-account-key
+          optional: true
       nodeSelector:
         kubernetes.io/arch: amd64
       tolerations:
