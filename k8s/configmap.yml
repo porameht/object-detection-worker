@@ -5,7 +5,7 @@ metadata:
   namespace: object-detection
 data:
   GCP_PROJECT_ID: "processing-469712"
-  GCS_BUCKET: "object-detection-images"
+  GCS_BUCKET: "object-detection-images-processing-469712"
   QUEUE_NAME: "detection_queue"
   CONFIDENCE_THRESHOLD: "0.5"
   CALLBACK_TIMEOUT: "30"
