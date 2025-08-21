@@ -17,8 +17,6 @@ spec:
       containers:
       - name: object-detection-worker
         image: GOOGLE_CLOUD_IMAGE
-        ports:
-        - containerPort: 8000
         env:
         - name: GCP_PROJECT_ID
           valueFrom:
@@ -42,28 +40,14 @@ spec:
           limits:
             memory: "4Gi"
             cpu: "2000m"
-        startupProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 10
-          failureThreshold: 18
         livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 0
+          exec:
+            command:
+            - pgrep
+            - -f
+            - python.*main.py
+          initialDelaySeconds: 60
           periodSeconds: 30
           timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 0
-          periodSeconds: 10
-          timeoutSeconds: 5
           failureThreshold: 3
       serviceAccountName: object-detection-worker-sa
