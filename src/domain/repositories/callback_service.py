@@ -5,5 +5,5 @@ from ..entities.detection_result import ProcessingResult
 
 class CallbackService(ABC):
     @abstractmethod
-    async def send_callback(self, callback_url: str, result: ProcessingResult) -> None:
+    async def send_callback(self, result: ProcessingResult) -> None:
         pass

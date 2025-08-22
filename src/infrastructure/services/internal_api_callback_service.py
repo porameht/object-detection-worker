@@ -13,8 +13,8 @@ class InternalAPICallbackService(CallbackService):
         self._api_service_url = api_service_url.rstrip('/')
         self._timeout = timeout
 
-    async def send_callback(self, callback_url: str, result: ProcessingResult) -> None:
-        """Send result via internal API call and optionally external callback"""
+    async def send_callback(self, result: ProcessingResult) -> None:
+        """Send result via internal API call"""
         
         # Prepare result payload
         payload = {
@@ -59,12 +59,3 @@ class InternalAPICallbackService(CallbackService):
             logger.error(f"[CALLBACK] Error details: {str(e)}")
             # Continue - don't fail the whole process
         
-        # Also send external callback if URL is provided
-        if callback_url:
-            try:
-                response = requests.post(callback_url, json=payload, timeout=self._timeout)
-                response.raise_for_status()
-                logger.info(f"Successfully sent external callback for task {result.task_id}")
-            except Exception as e:
-                logger.warning(f"External callback failed for task {result.task_id}: {e}")
-                # Don't raise - external callback is optional

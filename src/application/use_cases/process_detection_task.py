@@ -29,7 +29,7 @@ class ProcessDetectionTaskUseCase:
         try:
             await self._task_repo.update_task_status(task.task_id, "processing")
             
-            image = await self._image_repo.retrieve_image(task.image_key)
+            image = await self._image_repo.retrieve_image(task.image_path)
             
             detections = self._model.predict(image)
             
@@ -66,8 +66,7 @@ class ProcessDetectionTaskUseCase:
             await self._image_repo.store_results(results_key, results_data)
             await self._task_repo.update_task_status(task.task_id, "completed", result)
             
-            if task.callback_url:
-                await self._callback_service.send_callback(task.callback_url, result)
+            await self._callback_service.send_callback(result)
             
             return result
             

@@ -31,7 +31,7 @@ class SimpleTaskProcessor:
             logger.info(f"Starting processing task {task.task_id}")
             
             # Retrieve and process image
-            image = await self._image_repo.retrieve_image(task.image_key)
+            image = await self._image_repo.retrieve_image(task.image_path)
             detections = self._model.predict(image)
             
             processing_time_ms = int((time.time() - start_time) * 1000)
@@ -67,9 +67,8 @@ class SimpleTaskProcessor:
             
             await self._image_repo.store_results(results_key, results_data)
             
-            # Send callback notification
-            if task.callback_url:
-                await self._callback_service.send_callback(task.callback_url, result)
+            # Send callback notification (callback service handles URL from environment)
+            await self._callback_service.send_callback(result)
             
             logger.info(f"Task {task.task_id} completed successfully")
             return result

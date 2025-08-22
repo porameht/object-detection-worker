@@ -24,7 +24,6 @@ class Detection:
 class ProcessingTask:
     task_id: UUID
     image_path: str
-    callback_url: str = None
 
 
 @dataclass

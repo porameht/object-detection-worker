@@ -47,7 +47,7 @@ class ObjectDetectionWorker:
         """Handle a single task - called by Pub/Sub processor"""
         try:
             logger.info(f"[WORKER] 🚀 Starting task {task.task_id}")
-            logger.info(f"[WORKER] Image key: {task.image_path}, Callback: {task.callback_url or 'None'}")
+            logger.info(f"[WORKER] Image path: {task.image_path}")
             
             # Run the async task processor in sync context
             import asyncio

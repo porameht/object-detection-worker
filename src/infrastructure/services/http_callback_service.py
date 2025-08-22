@@ -6,10 +6,11 @@ from ...domain.repositories.callback_service import CallbackService
 
 
 class HttpCallbackService(CallbackService):
-    def __init__(self, timeout: int = 30):
+    def __init__(self, callback_url: str, timeout: int = 30):
+        self._callback_url = callback_url
         self._timeout = timeout
 
-    async def send_callback(self, callback_url: str, result: ProcessingResult) -> None:
+    async def send_callback(self, result: ProcessingResult) -> None:
         payload = {
             "task_id": str(result.task_id),
             "status": "completed",
@@ -35,5 +36,5 @@ class HttpCallbackService(CallbackService):
             "timestamp": datetime.utcnow().isoformat(),
         }
         
-        response = requests.post(callback_url, json=payload, timeout=self._timeout)
+        response = requests.post(self._callback_url, json=payload, timeout=self._timeout)
         response.raise_for_status()
