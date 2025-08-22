@@ -6,7 +6,7 @@ from uuid import UUID
 from ...domain.entities.detection_result import ProcessingTask, ProcessingResult, Detection
 from ...domain.repositories.detection_model import DetectionModel
 from ...domain.repositories.image_repository import ImageRepository
-from ...domain.repositories.task_repository import TaskRepository
+
 from ...domain.repositories.callback_service import CallbackService
 
 
@@ -15,20 +15,16 @@ class ProcessDetectionTaskUseCase:
         self,
         detection_model: DetectionModel,
         image_repository: ImageRepository,
-        task_repository: TaskRepository,
         callback_service: CallbackService,
     ):
         self._model = detection_model
         self._image_repo = image_repository
-        self._task_repo = task_repository
         self._callback_service = callback_service
 
     async def execute(self, task: ProcessingTask) -> ProcessingResult:
         start_time = time.time()
         
         try:
-            await self._task_repo.update_task_status(task.task_id, "processing")
-            
             image = await self._image_repo.retrieve_image(task.image_path)
             
             detections = self._model.predict(image)
@@ -64,12 +60,10 @@ class ProcessDetectionTaskUseCase:
             }
             
             await self._image_repo.store_results(results_key, results_data)
-            await self._task_repo.update_task_status(task.task_id, "completed", result)
             
             await self._callback_service.send_callback(result)
             
             return result
             
         except Exception as e:
-            await self._task_repo.update_task_status(task.task_id, "failed")
             raise

@@ -35,13 +35,6 @@ def mock_image_repository():
 
 
 @pytest.fixture
-def mock_task_repository():
-    repo = Mock()
-    repo.update_task_status = AsyncMock()
-    return repo
-
-
-@pytest.fixture
 def mock_callback_service():
     service = Mock()
     service.send_callback = AsyncMock()
@@ -49,22 +42,20 @@ def mock_callback_service():
 
 
 @pytest.fixture
-def use_case(mock_detection_model, mock_image_repository, mock_task_repository, mock_callback_service):
+def use_case(mock_detection_model, mock_image_repository, mock_callback_service):
     return ProcessDetectionTaskUseCase(
         detection_model=mock_detection_model,
         image_repository=mock_image_repository,
-        task_repository=mock_task_repository,
         callback_service=mock_callback_service,
     )
 
 
 @pytest.mark.asyncio
-async def test_execute_successful_processing(use_case, mock_detection_model, mock_image_repository, mock_task_repository, mock_callback_service):
+async def test_execute_successful_processing(use_case, mock_detection_model, mock_image_repository, mock_callback_service):
     task_id = uuid4()
     task = ProcessingTask(
         task_id=task_id,
-        image_key="test-image.jpg",
-        callback_url="http://example.com/callback"
+        image_path="test-image.jpg"
     )
     
     result = await use_case.execute(task)
@@ -75,38 +66,35 @@ async def test_execute_successful_processing(use_case, mock_detection_model, moc
     assert result.processing_time_ms >= 0
     assert isinstance(result.processed_at, datetime)
     
-    mock_task_repository.update_task_status.assert_any_call(task_id, "processing")
-    mock_task_repository.update_task_status.assert_any_call(task_id, "completed", result)
     mock_image_repository.retrieve_image.assert_called_once_with("test-image.jpg")
     mock_detection_model.predict.assert_called_once()
-    mock_callback_service.send_callback.assert_called_once_with("http://example.com/callback", result)
+    mock_callback_service.send_callback.assert_called_once_with(result)
 
 
 @pytest.mark.asyncio
-async def test_execute_without_callback_url(use_case, mock_detection_model, mock_image_repository, mock_task_repository, mock_callback_service):
+async def test_execute_without_callback_url(use_case, mock_detection_model, mock_image_repository, mock_callback_service):
     task_id = uuid4()
     task = ProcessingTask(
         task_id=task_id,
-        image_key="test-image.jpg"
+        image_path="test-image.jpg"
     )
     
     result = await use_case.execute(task)
     
     assert result.task_id == task_id
-    mock_callback_service.send_callback.assert_not_called()
+    # Callback service is always called in this implementation
+    mock_callback_service.send_callback.assert_called_once_with(result)
 
 
 @pytest.mark.asyncio
-async def test_execute_handles_exception(use_case, mock_detection_model, mock_image_repository, mock_task_repository, mock_callback_service):
+async def test_execute_handles_exception(use_case, mock_detection_model, mock_image_repository, mock_callback_service):
     task_id = uuid4()
     task = ProcessingTask(
         task_id=task_id,
-        image_key="test-image.jpg"
+        image_path="test-image.jpg"
     )
     
     mock_image_repository.retrieve_image.side_effect = Exception("Image not found")
     
     with pytest.raises(Exception, match="Image not found"):
         await use_case.execute(task)
-    
-    mock_task_repository.update_task_status.assert_any_call(task_id, "failed")

@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from ...domain.entities.detection_result import ProcessingTask, ProcessingResult
 from ...domain.repositories.detection_model import DetectionModel
 from ...domain.repositories.image_repository import ImageRepository
@@ -67,6 +68,7 @@ class SimpleTaskProcessor:
             
             await self._image_repo.store_results(results_key, results_data)
             
+            
             # Send callback notification (callback service handles URL from environment)
             await self._callback_service.send_callback(result)
             
@@ -75,4 +77,6 @@ class SimpleTaskProcessor:
             
         except Exception as e:
             logger.error(f"Task {task.task_id} failed: {e}")
+            
+                
             raise
