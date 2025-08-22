@@ -33,7 +33,7 @@ class PubSubTaskProcessor:
                 task_data = json.loads(message.data.decode('utf-8'))
                 task = ProcessingTask(
                     task_id=UUID(task_data["task_id"]),
-                    image_key=task_data["image_key"],
+                    image_path=task_data["image_path"],
                     callback_url=task_data.get("callback_url"),
                 )
                 
