@@ -1,6 +1,5 @@
 import json
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 from uuid import UUID
 
@@ -17,7 +16,6 @@ class PubSubTaskProcessor:
         self._subscription_name = subscription_name
         self._subscriber = pubsub_v1.SubscriberClient()
         self._subscription_path = self._subscriber.subscription_path(project_id, subscription_name)
-        self._executor = ThreadPoolExecutor(max_workers=1)  # Single worker per instance
         
     def start_consuming(self, callback: Callable[[ProcessingTask], None]) -> None:
         """Start consuming messages from Pub/Sub subscription"""

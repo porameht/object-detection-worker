@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from ...domain.entities.detection_result import ProcessingTask, ProcessingResult
 from ...domain.entities.serializers import serialize_processing_result
 from ...domain.repositories.detection_model import DetectionModel
@@ -25,7 +24,7 @@ class TaskProcessor:
     async def process_task(self, task: ProcessingTask) -> ProcessingResult:
         """Process a detection task"""
         import time
-        from datetime import datetime
+        from datetime import datetime, UTC
         
         start_time = time.time()
         
@@ -41,7 +40,7 @@ class TaskProcessor:
             result = ProcessingResult(
                 task_id=task.task_id,
                 detections=detections,
-                processed_at=datetime.utcnow(),
+                processed_at=datetime.now(UTC),
                 processing_time_ms=processing_time_ms,
             )
             

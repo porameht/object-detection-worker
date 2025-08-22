@@ -1,8 +1,9 @@
 import requests
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from ...domain.entities.detection_result import ProcessingResult
+from ...domain.entities.serializers import serialize_processing_result
 from ...domain.repositories.callback_service import CallbackService
 
 logger = logging.getLogger(__name__)
@@ -16,30 +17,16 @@ class InternalAPICallbackService(CallbackService):
     async def send_callback(self, result: ProcessingResult) -> None:
         """Send result via internal API call"""
         
-        # Prepare result payload
+        # Prepare result payload using shared serializer (DRY)
+        results_data = serialize_processing_result(result)
         payload = {
             "task_id": str(result.task_id),
             "status": "completed",
             "results": {
                 "detection_count": len(result.detections),
-                "detections": [
-                    {
-                        "class_id": d.class_id,
-                        "class_name": d.class_name,
-                        "confidence": d.confidence,
-                        "bbox": {
-                            "x1": d.bbox.x1,
-                            "y1": d.bbox.y1,
-                            "x2": d.bbox.x2,
-                            "y2": d.bbox.y2,
-                        },
-                    }
-                    for d in result.detections
-                ],
-                "processed_at": result.processed_at.isoformat(),
-                "processing_time_ms": result.processing_time_ms,
+                **results_data,
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         
         # Send to internal API for long polling notification
