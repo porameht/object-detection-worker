@@ -23,7 +23,7 @@ class Detection:
 @dataclass
 class ProcessingTask:
     task_id: UUID
-    image_key: str
+    image_path: str
     callback_url: str = None
 
 

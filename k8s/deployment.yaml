@@ -6,6 +6,11 @@ metadata:
     app: object-detection-worker
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: object-detection-worker
@@ -51,4 +56,15 @@ spec:
           periodSeconds: 30
           timeoutSeconds: 10
           failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      terminationGracePeriodSeconds: 60
       serviceAccountName: object-detection-worker-sa
