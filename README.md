@@ -1,32 +1,28 @@
 # Object Detection Worker
 
-A scalable, containerized worker service for processing object detection tasks using the RT-DETR model. The service processes images from S3, performs object detection, and stores results back to S3 with optional HTTP callbacks.
+ML Worker for object detection at scale. Pulls tasks from Pub/Sub, reads images from GCS, runs RFDETR, stores results to GCS, and notifies an internal API.
 
-## Architecture
+## What it does
 
-The application follows Clean Architecture principles with clear separation of concerns:
-
-- **Domain**: Core business entities and repository interfaces
-- **Application**: Use cases and business logic
-- **Infrastructure**: External service implementations (Pub/Sub, GCS, HTTP)
+- Consume tasks from Pub/Sub subscription
+- Download image from GCS (`image_path`)
+- Run detection with RFDETR
+- Store JSON results to `results/<task_id>/detection_results.json` in GCS
+- POST result summary to internal API
 
 ## Features
 
-- **Real-time Object Detection**: Uses RT-DETR model for accurate object detection
-- **Queue-based Processing**: Pub/Sub-backed task queue for scalable processing
-- **Cloud Storage**: GCS integration for image input and result storage
-- **HTTP Callbacks**: Optional webhook notifications on task completion
-- **Clean Architecture**: Maintainable, testable codebase with dependency injection
-- **Docker Support**: Multi-stage builds optimized for production
-- **Kubernetes Ready**: Complete K8s manifests for deployment
+- Pub/Sub driven worker
+- GCS I/O (images, results)
+- Internal API callback
+- Docker + Kubernetes ready
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.12+
-- Docker (optional)
-- Google Cloud Project with Pub/Sub and Storage APIs enabled
+- Python 3.11+
+- Google Cloud: Pub/Sub + Storage
 - GCS bucket
 
 ### Local Development
@@ -47,12 +43,17 @@ The application follows Clean Architecture principles with clear separation of c
    # Edit .env with your configuration
    ```
 
+3. **Run tests (optional)**:
+   ```bash
+   pytest -q
+   ```
+
 4. **Run the worker**:
    ```bash
    python -m src.main
    ```
 
-### Docker Deployment
+### Docker
 
 ```bash
 # Build image
@@ -62,42 +63,36 @@ docker build -t object-detection-worker .
 docker run --env-file .env object-detection-worker
 ```
 
-### Kubernetes Deployment
+### Kubernetes
 
 ```bash
 # Apply all manifests
 kubectl apply -f k8s/
 ```
 
-## Configuration
-
-All configuration is handled through environment variables:
+## Configuration (env)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `GCP_PROJECT_ID` | Google Cloud Project ID | - |
-| `GCS_BUCKET` | GCS bucket for images and results | `object-detection-images` |
-| `PUBSUB_TOPIC` | Pub/Sub topic name | `object-detection-tasks` |
-| `CONFIDENCE_THRESHOLD` | Detection confidence threshold | `0.5` |
-| `CALLBACK_TIMEOUT` | HTTP callback timeout (seconds) | `30` |
+| `GCP_PROJECT_ID` | Google Cloud Project ID | `your-gcp-project` |
+| `GCS_BUCKET` | GCS bucket name | `object-detection-images` |
+| `PUBSUB_SUBSCRIPTION` | Pub/Sub subscription | `detection-workers` |
+| `API_SERVICE_URL` | Internal API base URL | `http://object-detection-api` |
+| `CONFIDENCE_THRESHOLD` | Detection threshold | `0.5` |
+| `CALLBACK_TIMEOUT` | Callback timeout (s) | `30` |
 
-## Task Processing
+## Task format
 
-### Input Format
-
-Tasks are JSON objects published to the Pub/Sub topic:
+Publish a message to Pub/Sub with:
 
 ```json
 {
   "task_id": "550e8400-e29b-41d4-a716-446655440000",
-  "image_key": "images/photo.jpg",
-  "callback_url": "https://api.example.com/webhooks/detection"
+  "image_path": "images/photo.jpg"
 }
 ```
 
-### Output Format
-
-Results are stored in GCS as JSON:
+Result JSON stored in GCS:
 
 ```json
 {
@@ -120,124 +115,39 @@ Results are stored in GCS as JSON:
 }
 ```
 
-## Project Structure
+## Structure
 
 ```
 src/
-├── main.py                 # Application entry point
-├── domain/                 # Core business logic
-│   ├── entities/          # Domain entities
-│   └── repositories/      # Repository interfaces
-├── application/           # Use cases
-│   └── use_cases/        
-├── infrastructure/        # External services
-│   ├── config.py         # Configuration
-│   ├── models/           # ML model implementations
-│   ├── repositories/     # Repository implementations
-│   └── services/         # External service clients
-└── __init__.py
+├── main.py
+├── domain/
+│   ├── entities/
+│   └── repositories/
+└── infrastructure/
+    ├── config.py
+    ├── models/
+    ├── repositories/
+    └── services/
 ```
 
-## Development
-
-### Testing
+## Testing
 
 ```bash
-# Run tests (configure test command in your environment)
-pytest  # or your preferred test runner
+pytest -q
 ```
 
-## Deployment
+## Deploy (CI/CD)
 
-The service includes production-ready configurations:
+GitHub Actions workflow `.github/workflows/deploy.yml`:
 
-- **Multi-stage Docker builds** for optimized images
-- **Kubernetes manifests** with proper resource limits
-- **ConfigMaps and Secrets** for environment configuration
-- **RBAC** for secure cluster access
+- Job 1: run tests → `pytest tests/ --verbose`
+- Job 2: build & push Docker to GAR
+- Apply K8s manifests with updated image
 
-## Scaling Management
+## Scaling (optional)
 
-The worker includes an intelligent Horizontal Pod Autoscaler (HPA) optimized specifically for ML image processing workloads.
+K8s HPA manifests included under `k8s/`. Tune based on Pub/Sub queue depth and resource usage.
 
-### Why Pub/Sub Queue Depth is Primary Metric
+## Logs
 
-**Traditional resource-based scaling (Memory/CPU):**
-- ❌ **Reactive**: Scales after resources are saturated
-- ❌ **Delayed**: Users wait 2-3 minutes for model startup
-- ❌ **Inaccurate**: Resource usage varies by image complexity
-
-**Queue-based scaling (Pub/Sub messages):**
-- ✅ **Predictive**: Scales before bottlenecks occur
-- ✅ **Immediate**: Fast response to traffic spikes
-- ✅ **Accurate**: 1 message = 1 image = predictable workload
-
-### Scaling Logic Priority
-
-1. **Primary**: Pub/Sub Queue Depth (most accurate)
-   - Direct correlation: queue messages = actual work waiting
-   - Business-aligned: scale based on real user demand
-   - Predictive: scale before resource saturation
-
-2. **Secondary**: Memory Usage (critical for ML models)
-   - ML models require significant memory for inference
-   - Memory exhaustion causes pod crashes (OOMKilled)
-
-3. **Tertiary**: CPU Usage (backup metric)
-   - Less critical for inference workloads
-   - Used as fallback when queue metrics unavailable
-
-### Usage Examples
-
-```bash
-# Enable queue-based scaling (recommended)
-./scripts/manage-scaling.sh enable development        # 1-5 pods, 3 msgs/pod
-./scripts/manage-scaling.sh enable production         # 2-12 pods, 2 msgs/pod
-./scripts/manage-scaling.sh enable testing            # 1-3 pods, 5 msgs/pod
-
-# Fallback to resource-only scaling
-./scripts/manage-scaling.sh enable production true    # Disable queue metrics
-
-# Monitoring and management
-./scripts/manage-scaling.sh monitor                   # Real-time HPA metrics
-./scripts/manage-scaling.sh status                    # Current scaling status
-./scripts/manage-scaling.sh scale 5                   # Manual scaling override
-```
-
-### Scaling Profiles
-
-| Profile | Min/Max Pods | Queue Threshold | Memory | CPU | Use Case |
-|---------|--------------|-----------------|--------|-----|----------|
-| **development** | 1-5 | 3 msgs/pod | 75% | 60% | Testing, low traffic |
-| **production** | 2-12 | 2 msgs/pod | 70% | 50% | Production workloads |
-| **testing** | 1-3 | 5 msgs/pod | 80% | 70% | CI/CD, automated tests |
-
-### Real-world Scenario
-
-**Morning rush**: 1000 users upload images simultaneously
-
-**Queue-based scaling response:**
-1. Queue depth: 1000 messages detected
-2. HPA calculates: 1000 ÷ 2 = 500 pods needed (production profile)
-3. Scales to maxReplicas: 12 pods immediately
-4. Users see results within 30 seconds
-
-**Resource-based scaling response:**
-1. Single pod starts processing → Memory/CPU spike
-2. HPA triggers scale-up after 60-300s delay
-3. New pods take 2-3 minutes to load ML model
-4. Users wait 5+ minutes for results
-
-### Cost Optimization
-
-- **Aggressive scale-down**: When queue is empty, scale to minimum replicas
-- **Conservative scale-up**: Gradual increase to handle sustained load
-- **Smart thresholds**: Different profiles for different traffic patterns
-
-## Monitoring
-
-The worker logs processing events at INFO level:
-
-- Task start/completion
-- Error handling
-- Performance metrics (processing time)
+INFO-level logs for task start/end, errors, and processing time.
