@@ -46,13 +46,14 @@ class ObjectDetectionWorker:
     def _handle_task(self, task: ProcessingTask):
         """Handle a single task - called by Pub/Sub processor"""
         try:
-            logger.info(f"Processing task {task.task_id}")
+            logger.info(f"[WORKER] 🚀 Starting task {task.task_id}")
+            logger.info(f"[WORKER] Image path: {task.image_path}, Callback: {task.callback_url or 'None'}")
             
             # Run the async task processor in sync context
             import asyncio
             asyncio.run(self._task_processor_service.process_task(task))
             
-            logger.info(f"Task {task.task_id} completed")
+            logger.info(f"[WORKER] ✅ Task {task.task_id} completed successfully")
             
         except Exception as e:
             logger.error(f"Error processing task {task.task_id}: {e}")

@@ -45,12 +45,18 @@ class InternalAPICallbackService(CallbackService):
         # Send to internal API for long polling notification
         try:
             internal_url = f"{self._api_service_url}/internal/task-completed"
+            logger.info(f"[CALLBACK] Sending task completion to API: {internal_url}")
+            logger.info(f"[CALLBACK] Task ID: {result.task_id}, Detections: {len(result.detections)}, Processing time: {result.processing_time_ms}ms")
+            
             response = requests.post(internal_url, json=payload, timeout=self._timeout)
             response.raise_for_status()
-            logger.info(f"Successfully notified API service for task {result.task_id}")
+            
+            logger.info(f"[CALLBACK] ✅ Successfully notified API service for task {result.task_id}")
+            logger.info(f"[CALLBACK] API Response: Status={response.status_code}")
             
         except Exception as e:
-            logger.error(f"Failed to notify API service for task {result.task_id}: {e}")
+            logger.error(f"[CALLBACK] ❌ Failed to notify API service for task {result.task_id}")
+            logger.error(f"[CALLBACK] Error details: {str(e)}")
             # Continue - don't fail the whole process
         
         # Also send external callback if URL is provided
