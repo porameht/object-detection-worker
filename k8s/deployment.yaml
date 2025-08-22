@@ -34,8 +34,6 @@ spec:
               key: gcs-bucket
         - name: API_SERVICE_URL
           value: "http://object-detection-api-service"
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /var/secrets/google/key.json
         resources:
           requests:
             memory: "2Gi"
@@ -53,13 +51,4 @@ spec:
           periodSeconds: 30
           timeoutSeconds: 10
           failureThreshold: 3
-        volumeMounts:
-        - name: gcp-service-account
-          mountPath: /var/secrets/google
-          readOnly: true
-      volumes:
-      - name: gcp-service-account
-        secret:
-          secretName: gcp-service-account-key
-          optional: true
       serviceAccountName: object-detection-worker-sa
