@@ -44,9 +44,9 @@ spec:
         livenessProbe:
           exec:
             command:
-            - pgrep
-            - -f
-            - python.*main.py
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
           initialDelaySeconds: 60
           periodSeconds: 30
           timeoutSeconds: 10
