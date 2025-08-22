@@ -38,7 +38,10 @@ spec:
               name: app-config
               key: gcs-bucket
         - name: API_SERVICE_URL
-          value: "http://object-detection-api-service"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: api-service-url
         resources:
           requests:
             memory: "2Gi"
