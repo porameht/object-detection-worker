@@ -6,7 +6,7 @@ from uuid import UUID
 from google.cloud import storage
 
 from .domain.entities.detection_result import ProcessingTask
-from .infrastructure.services.simple_task_processor import SimpleTaskProcessor
+from .infrastructure.services.task_processor import TaskProcessor
 from .infrastructure.config import load_config
 from .infrastructure.models.rfdetr_model import RFDETRModel
 from .infrastructure.repositories.gcs_image_repository import GCSImageRepository
@@ -32,7 +32,7 @@ class ObjectDetectionWorker:
             self._config.callback_timeout
         )
         
-        self._task_processor_service = SimpleTaskProcessor(
+        self._task_processor = TaskProcessor(
             detection_model,
             image_repository,
             callback_service,
@@ -51,7 +51,7 @@ class ObjectDetectionWorker:
             
             # Run the async task processor in sync context
             import asyncio
-            asyncio.run(self._task_processor_service.process_task(task))
+            asyncio.run(self._task_processor.process_task(task))
             
             logger.info(f"[WORKER] ✅ Task {task.task_id} completed successfully")
             

@@ -41,24 +41,11 @@ class TestProcessingTask:
         task_id = uuid4()
         task = ProcessingTask(
             task_id=task_id,
-            image_path="test-image.jpg",
-            callback_url="http://example.com/callback"
-        )
-        
-        assert task.task_id == task_id
-        assert task.image_path == "test-image.jpg"
-        assert task.callback_url == "http://example.com/callback"
-    
-    def test_processing_task_without_callback(self):
-        task_id = uuid4()
-        task = ProcessingTask(
-            task_id=task_id,
             image_path="test-image.jpg"
         )
         
         assert task.task_id == task_id
         assert task.image_path == "test-image.jpg"
-        assert task.callback_url is None
 
 
 class TestProcessingResult:
