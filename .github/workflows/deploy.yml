@@ -83,6 +83,7 @@ jobs:
         run: |
           # Replace the image name in the k8s template
           sed -i "s|GOOGLE_CLOUD_IMAGE|$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA|g" k8s/deployment.yaml
-          kubectl apply -f k8s/
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/hpa.yaml
           kubectl rollout status deployment/$DEPLOYMENT_NAME
           kubectl get services -o wide

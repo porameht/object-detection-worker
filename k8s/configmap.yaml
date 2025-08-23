@@ -3,7 +3,6 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  gcp-project-id: "processing-469712"
-  gcs-bucket: "object-detection-images-processing-469712"
+  gcp-project-id: "your-project-id"
+  gcs-bucket: "object-detection-images-your-project-id"
   pubsub-topic: "object-detection-tasks"
-  api-service-url: "http://34.143.137.181"
