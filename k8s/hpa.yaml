@@ -1,95 +1,43 @@
-# Horizontal Pod Autoscaler for Object Detection ML Worker
-# Optimized for image processing workloads with configurable scaling profiles
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: object-detection-worker-hpa
-  annotations:
-    # Scaling Profile: "development" | "production" | "testing"
-    # Change this annotation to switch between profiles
-    scaling.profile: "development"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: object-detection-worker
-  
-  # Development Profile (Default)
-  # Use for testing and low-traffic environments
   minReplicas: 1
   maxReplicas: 5
-  
-  # Production Profile (Uncomment for production)
-  # minReplicas: 2
-  # maxReplicas: 12
-  
-  # Testing Profile (Uncomment for CI/CD)
-  # minReplicas: 1
-  # maxReplicas: 3
-  
   metrics:
-  # Primary: Task queue depth (most accurate for ML workloads)
-  - type: External
-    external:
-      metric:
-        name: pubsub.googleapis.com|subscription|num_undelivered_messages
-        selector:
-          matchLabels:
-            resource.labels.subscription_id: detection-workers
-      target:
-        type: AverageValue
-        # Development: "3" | Production: "2" | Testing: "5"
-        averageValue: "3"
-  
-  # Secondary: Memory usage (critical for ML models)
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        # Development: 75% | Production: 70% | Testing: 80%
-        averageUtilization: 75
-  
-  # Tertiary: CPU usage (backup metric)
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        # Development: 60% | Production: 50% | Testing: 70%
-        averageUtilization: 60
-  
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
   behavior:
     scaleDown:
-      # Wait time before scaling down (model startup is expensive)
-      # Development: 300s | Production: 900s | Testing: 180s
       stabilizationWindowSeconds: 300
       policies:
       - type: Percent
-        # Max percentage reduction per scale event
-        # Development: 50% | Production: 20% | Testing: 100%
         value: 50
-        # How often to evaluate scale down
-        # Development: 120s | Production: 180s | Testing: 60s
         periodSeconds: 120
       - type: Pods
-        # Max pods removed per scale event
-        # Development: 1 | Production: 1 | Testing: 2
         value: 1
         periodSeconds: 120
-    
     scaleUp:
-      # Wait time before scaling up (balance speed vs stability)
-      # Development: 60s | Production: 180s | Testing: 30s
       stabilizationWindowSeconds: 60
       policies:
       - type: Pods
-        # Max pods added per scale event
-        # Development: 2 | Production: 3 | Testing: 1
         value: 2
         periodSeconds: 120
       - type: Percent
-        # Max percentage increase per scale event
-        # Development: 100% | Production: 100% | Testing: 200%
         value: 100
         periodSeconds: 120
