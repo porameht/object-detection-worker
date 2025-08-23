@@ -2,6 +2,8 @@
 
 ML Worker for object detection at scale. Pulls tasks from Pub/Sub, reads images from GCS, runs RFDETR, stores results to GCS, and notifies an internal API.
 
+<img width="746" height="394" alt="Screenshot 2568-08-23 at 16 04 01" src="https://github.com/user-attachments/assets/cab74297-1c3c-4103-a8f2-a2ff043e18e3" />
+
 ## What it does
 
 - Consume tasks from Pub/Sub subscription
