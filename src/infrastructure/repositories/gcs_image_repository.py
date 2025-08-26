@@ -4,7 +4,7 @@ from PIL import Image
 from google.cloud import storage
 from google.cloud.exceptions import NotFound
 
-from ...domain.repositories.image_repository import ImageRepository
+from src.domain.repositories.image_repository import ImageRepository
 
 
 class GCSImageRepository(ImageRepository):

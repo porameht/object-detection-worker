@@ -1,17 +1,15 @@
 import asyncio
-import json
 import logging
-from uuid import UUID
 
 from google.cloud import storage
 
-from .domain.entities.detection_result import ProcessingTask
-from .infrastructure.services.task_processor import TaskProcessor
-from .infrastructure.config import load_config
-from .infrastructure.models.rfdetr_model import RFDETRModel
-from .infrastructure.repositories.gcs_image_repository import GCSImageRepository
-from .infrastructure.repositories.pubsub_task_processor import PubSubTaskProcessor
-from .infrastructure.services.internal_api_callback_service import InternalAPICallbackService
+from src.domain.entities.detection_result import ProcessingTask
+from src.infrastructure.services.task_processor import TaskProcessor
+from src.infrastructure.config import load_config
+from src.infrastructure.models.rfdetr_model import RFDETRModel
+from src.infrastructure.repositories.gcs_image_repository import GCSImageRepository
+from src.infrastructure.repositories.pubsub_task_processor import PubSubTaskProcessor
+from src.infrastructure.services.internal_api_callback_service import InternalAPICallbackService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,20 +42,14 @@ class ObjectDetectionWorker:
         )
 
     def _handle_task(self, task: ProcessingTask):
-        """Handle a single task - called by Pub/Sub processor"""
+        """Handle a single task"""
         try:
-            logger.info(f"[WORKER] 🚀 Starting task {task.task_id}")
-            logger.info(f"[WORKER] Image path: {task.image_path}")
-            
-            # Run the async task processor in sync context
-            import asyncio
+            logger.info(f"Processing task {task.task_id}")
             asyncio.run(self._task_processor.process_task(task))
-            
-            logger.info(f"[WORKER] ✅ Task {task.task_id} completed successfully")
-            
+            logger.info(f"Task {task.task_id} completed")
         except Exception as e:
-            logger.error(f"Error processing task {task.task_id}: {e}")
-            raise  # Re-raise to trigger message nack
+            logger.error(f"Task {task.task_id} failed: {e}")
+            raise
 
     def run(self):
         """Start the worker using Pub/Sub message consumption"""

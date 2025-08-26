@@ -2,9 +2,9 @@ import requests
 import logging
 from datetime import datetime, UTC
 
-from ...domain.entities.detection_result import ProcessingResult
-from ...domain.entities.serializers import serialize_processing_result
-from ...domain.repositories.callback_service import CallbackService
+from src.domain.entities.detection_result import ProcessingResult
+from src.domain.entities.serializers import serialize_processing_result
+from src.domain.repositories.callback_service import CallbackService
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +29,15 @@ class InternalAPICallbackService(CallbackService):
             "timestamp": datetime.now(UTC).isoformat(),
         }
         
-        # Send to internal API for long polling notification
+        # Send to internal API
         try:
-            internal_url = f"{self._api_service_url}/internal/task-completed"
-            logger.info(f"[CALLBACK] Sending task completion to API: {internal_url}")
-            logger.info(f"[CALLBACK] Task ID: {result.task_id}, Detections: {len(result.detections)}, Processing time: {result.processing_time_ms}ms")
+            url = f"{self._api_service_url}/internal/task-completed"
+            logger.info(f"Sending callback for task {result.task_id}")
             
-            response = requests.post(internal_url, json=payload, timeout=self._timeout)
+            response = requests.post(url, json=payload, timeout=self._timeout)
             response.raise_for_status()
-            
-            logger.info(f"[CALLBACK] ✅ Successfully notified API service for task {result.task_id}")
-            logger.info(f"[CALLBACK] API Response: Status={response.status_code}")
+            logger.info(f"Callback sent successfully for task {result.task_id}")
             
         except Exception as e:
-            logger.error(f"[CALLBACK] ❌ Failed to notify API service for task {result.task_id}")
-            logger.error(f"[CALLBACK] Error details: {str(e)}")
-            # Continue - don't fail the whole process
+            logger.error(f"Callback failed for task {result.task_id}: {e}")
         

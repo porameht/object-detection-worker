@@ -4,8 +4,8 @@ import supervision as sv
 from rfdetr import RFDETRBase
 from rfdetr.util.coco_classes import COCO_CLASSES
 
-from ...domain.entities.detection_result import Detection, BoundingBox
-from ...domain.repositories.detection_model import DetectionModel
+from src.domain.entities.detection_result import Detection, BoundingBox
+from src.domain.repositories.detection_model import DetectionModel
 
 
 class RFDETRModel(DetectionModel):

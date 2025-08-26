@@ -5,7 +5,7 @@ from uuid import UUID
 
 from google.cloud import pubsub_v1
 
-from ...domain.entities.detection_result import ProcessingTask
+from src.domain.entities.detection_result import ProcessingTask
 
 logger = logging.getLogger(__name__)
 
